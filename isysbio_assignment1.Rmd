@@ -62,8 +62,7 @@ p2 <- tibble(total.weeks, cum.cases) %>%
 p2
 ```
 
-
-## Item b
+### Item b
 
 ```{r Quantitative model of the exponential spread of Covid-19}
 # Functionalize the formula
@@ -92,7 +91,7 @@ weeks.to.mayhem <- log(7.8e9) / (C * B)
 sprintf("It would require %.3f weeks to spread through the whole Earth", weeks.to.mayhem)
 ```
 
-## Item c
+### Item c
 
 ```{r}
 # Aux function for Runge-Kutta method
@@ -106,7 +105,7 @@ delta_inv <- 2 # weeks
 system.of.eqns <- function(t, X) {
 
   "
-  ------------------------------------------------
+  ---------------------------------------------------------------
   Modeling a dynamical system as follows
 
   s'(t) = -b*s(t)*i(t)
@@ -114,15 +113,16 @@ system.of.eqns <- function(t, X) {
   r'(t) = d*i(t)
 
   where b, d = beta, delta in SIR model
-  ------------------------------------------------
+  ---------------------------------------------------------------
   
   params:
     X: a list containing:
       1. the number of suspectible individuals
       2. the number of initially infected people
+      3. the number of initially recovered people
 
   returns:
-    derivative of SIR equations at time point t
+    derivatives (w.r.t. t) of SIR equations at time point t
 
   "
 
@@ -167,3 +167,4 @@ ggplot(pred, aes(x = time)) +
 
 ```
 
+### Item d
