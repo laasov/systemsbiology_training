@@ -1,0 +1,169 @@
+---
+title: "TMED917 2021 Set 1"
+author: "Lassi Virtanen"
+date: "04/2021"
+output: pdf_document
+---
+
+## Task 1 - Mathematical modeling
+
+## Task 2 - Modeling the spread of a viral infection
+
+### Item a
+
+```{r Dependencies, echo = F}
+library(tidyverse)
+library(viridis)
+library(patchwork)
+```
+
+```{r}
+# Parameterize path to tsv and read the data
+data.path <- "~/Documents/intro_to_systems_biology/Exercise Set 1-20210428/thl-covid.tsv"
+thl.data <- read_tsv(data.path, locale = locale(encoding = "UTF-8"))
+
+# Pick the number of days
+total.weeks <- 1:nrow(thl.data)
+
+# Compute row sums
+weekly.cases <- rowSums(thl.data[,2:ncol(thl.data)])
+
+# Plot the row sums
+p1 <- tibble(total.weeks, weekly.cases) %>%
+        ggplot(aes(x = total.weeks, y = weekly.cases, fill = weekly.cases)) + 
+        geom_bar(stat = "identity") +
+        scale_fill_viridis_c() +
+        scale_x_continuous(breaks = 1:length(thl.data$X1), labels = thl.data$X1) +
+        theme(axis.text.x = element_text(angle = 90, size = 5)) +
+        labs(fill = "Case count \n # people") +
+        labs(title = "Progression of Covid-19 in Finland",
+           x = "weeks from the initial measurements",
+           y = "number of cases")
+
+p1
+```
+
+```{r}
+# Cumulate cases
+cum.cases <- cumsum(weekly.cases)
+
+# Plot cumulative row sums
+p2 <- tibble(total.weeks, cum.cases) %>%
+        ggplot(aes(x = total.weeks, cumsum(weekly.cases), fill = weekly.cases)) + 
+        geom_bar(stat = "identity") +
+        scale_fill_viridis_c() +
+        scale_x_continuous(breaks = 1:length(thl.data$X1), labels = thl.data$X1) +
+        theme(axis.text.x = element_text(angle = 90, size = 5)) +
+        labs(fill = "Weekly cases \n # people") +
+        labs(title = "Cumulative distribution of Covid-19 cases in Finland, colored by weekly count",
+           x = "weeks from the initial measurements",
+           y = "number of cases")
+
+p2
+```
+
+
+## Item b
+
+```{r Quantitative model of the exponential spread of Covid-19}
+# Functionalize the formula
+infected <- function(B, C, t){
+  return(B * exp(C * t))
+}
+```
+
+```{r Computations and modelling of the spread}
+C = 0.836
+B = 1.598
+
+sprintf("At day 5, there would be %.3f cases", infected(C, B , 5/7))
+```
+
+```{r Similar calculation for t = 2 months}
+weeks.in.two.months <- 4 * 2
+
+sprintf("At t = 4 weeks, there would be %.3f cases", infected(C, B , weeks.in.two.months))
+```
+
+```{r Predicting the time required to infect the entire world}
+# Compute the number of weeks
+weeks.to.mayhem <- log(7.8e9) / (C * B)
+
+sprintf("It would require %.3f weeks to spread through the whole Earth", weeks.to.mayhem)
+```
+
+## Item c
+
+```{r}
+# Aux function for Runge-Kutta method
+source('~/Documents/intro_to_systems_biology/Exercise Set 1-20210428/rk4.R')
+
+# Set params
+population <- 5.5e6
+beta <- 2.430e-7
+delta_inv <- 2 # weeks
+
+system.of.eqns <- function(t, X) {
+
+  "
+  ------------------------------------------------
+  Modeling a dynamical system as follows
+
+  s'(t) = -b*s(t)*i(t)
+  i'(t) = b*s(t)*i(t) - d*i(t)
+  r'(t) = d*i(t)
+
+  where b, d = beta, delta in SIR model
+  ------------------------------------------------
+  
+  params:
+    X: a list containing:
+      1. the number of suspectible individuals
+      2. the number of initially infected people
+
+  returns:
+    derivative of SIR equations at time point t
+
+  "
+
+  s <- X[1]
+  i <- X[2]
+  r <- X[3]
+
+  ds <- -beta*s*i
+  di <- beta*s*i -delta_inv^(-1)*i
+  dr <- delta_inv^(-1)*i
+
+  return(c(ds, di, dr))
+}
+
+# Time period for which to run the simulation
+t_scale <- 1:100
+
+# Number of people infected at week 0
+initial.infected <- beta * population
+
+# Vectorize the S, I, R model params
+model.params <- c(population, initial.infected, 0) # initially 0 recovered
+
+# Time scale + integration
+rk_out <- rk4(system.of.eqns, t_scale, model.params)
+
+# Select the model predictions
+pred <- data.frame(t(rk_out$X))
+
+# Convert to tibble
+pred <- tibble(pred) %>% rename("S" = X1, "I" = X2, "R" = X3)
+pred$time <- t_scale
+
+# Plot
+ggplot(pred, aes(x = time)) +
+  geom_line(aes(y = S, color = "S"), linetype = "dotted") +
+  geom_line(aes(y = I, color = "I"), linetype = "dotdash") + 
+  geom_line(aes(y = R, color = "R"), linetype = "twodash") +
+  labs(title = "Dynamical SIR system prediction for Covid-19 spread in Finland",
+           x = "weeks from the initial measurements",
+           y = "number of individuals")
+
+```
+
