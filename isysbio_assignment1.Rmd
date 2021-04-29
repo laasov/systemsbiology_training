@@ -86,7 +86,7 @@ sprintf("At t = 4 weeks, there would be %.3f cases", infected(C, B , weeks.in.tw
 
 ```{r Predicting the time required to infect the entire world}
 # Compute the number of weeks
-weeks.to.mayhem <- log(7.8e9) / (C * B)
+weeks.to.mayhem <- log(7.8e9 / B) / C
 
 sprintf("It would require %.3f weeks to spread through the whole Earth", weeks.to.mayhem)
 ```
