@@ -168,3 +168,62 @@ ggplot(pred, aes(x = time)) +
 ```
 
 ### Item d
+
+## Task 3 - Simulating Monty Hall problem
+
+```{r}
+
+# FIXME Weird frequencies appearing...
+
+goats.or.cars <- function(doors) {
+
+  # Count params
+  wins.change <- 0
+  wins.dont.change <- 0
+
+  for (i in 1:length(doors)) {
+
+    # Pick a set of random numbers s.t. i_m != i_n for any m,n in {1,...,n_doors} 
+    lol.random.xd <- sample(1:length(doors), 3)
+    # Pick arbitrary element from the set of doors ; contains the car
+    prize <- doors[lol.random.xd[1]]
+    # Pick another random element from the same set
+    guess <- doors[lol.random.xd[2]]
+
+    # Open a door that is not the same random buess
+    host.opens <- doors[lol.random.xd[3]]
+    # A completely new guess. Can not be the same as initial guess or host.opens
+    new.door <- sample(1:length(doors), 1)
+
+    # Make sure that the new number is effective
+    while (new.door == lol.random.xd[2] | new.door == lol.random.xd[3]) {
+      # Terminates iff new guess is neither intial guess nor host's door
+      new.door <- sample(1:length(doors), 1)
+    }
+
+    # Guess with that number
+    new.guess <- doors[new.door]
+
+    # Win by not changing
+    if (prize == guess) {
+      wins.dont.change <- wins.dont.change + 1
+    }
+
+    # Win by changing
+    if (prize == new.guess) {
+      wins.change <- wins.change + 1
+    }
+
+    # No win, get a goat
+    goat <- goat + 1
+
+  }
+
+  # Compute frequencies of both possible ways of playing
+  nc <- wins.dont.change / (wins.change + wins.dont.change)# + goat)
+  c <- wins.change / (wins.change + wins.dont.change)# + goat)
+
+  sprintf("Number of wins by changing tactic: %.3f  |  Number of wins by not changing tactic: %.3f", c, nc)
+
+}
+```
