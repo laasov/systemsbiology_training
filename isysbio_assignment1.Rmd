@@ -7,11 +7,31 @@ output: pdf_document
 
 ## Task 1 - Mathematical modeling
 
+### Item a
+
+A mathematical model of an infectious disease describes how the disease propagates through a population. This is usually done with (systems of) ordinary or partial differential equations. At the simplest, such model could try to describe and predict how many people would be infected at any time $t$. More robust models continue from this by considering a plethora of ''error'' terms which aim to reduce the model's deviation from an underlying, ''biological'' function.
+
+### Item b
+
+The three functions $S(t)$, $I(t)$ and $R(t)$ would arguably be the key properties of SIR. In a mathematical sense the parameters $\beta$ and $\gamma$ are, however, as essential as the functions. These are the parameters that are usually to be fitted into data during the earliest stages of an epidemic - thus dictating the efficiency of the model. I'll give the reproductive number $R_t$ also a special word as it has been a really important number during Covid-19.
+
+### Item c
+
+The model's downsides are that it assumes that the population is randomly mixed, homogenous (in terms of behaviour), and large. The authors also argue that the exponential distribution is unrealistic since \textit{e.g.}, people do not fall ill immediately. However, the model does usually a fairly good job at modeling how infections propagate since it applies well to many situations.
+
+### Item d
+
+Vaccines, treatment of infectives, social distancing and lockdowns, and efficient politics in concert with reliable and precise health data and rigorous modeling of the disease.
+
+### Item e
+
+The authors express many concers. First of all, even though many models may produce similar outcomes, sometimes they don't. This can lead to wrong predictions and models (and by this I mean: all models are wrong, but we should try to minimize how wrong they are). Moreover, even if the models were effective and accaptable, the data, they were formed from could have been compiled to not represent the real world. This leads to the ancient failure of creating a crap model to represent crap data. Not good. Lastly, no model can be precise on every aspect. Every model is a product of a trade-off between precision and applicability. For example, the SIR model does not produce reliable quantitative estimates about vaccines. Thus, such dilemmata should be considered with jointly evaluating a handful of other models.
+
 ## Task 2 - Modeling the spread of a viral infection
 
 ### Item a
 
-```{r Dependencies, echo = F}
+```{r Dependencies}
 library(tidyverse)
 library(viridis)
 library(patchwork)
@@ -79,7 +99,7 @@ infected <- function(x) {
 sprintf("At day 5, there would be %.3f cases", infected(5/7))
 ```
 
-```{r Similar calculation for t = 2 months}
+```{r Similar calculation for 2 months}
 weeks.in.two.months <- 4 * 2
 
 sprintf("At t = 4 weeks, there would be %.3f cases", infected(weeks.in.two.months))
@@ -177,8 +197,17 @@ ggplot(pred, aes(x = time)) +
 
 ### Item d
 
-according to the SIR-model, the pandemic would peak at $t_{max}$ s.t. $i(t_{max})\approx 1.4\cdot10^6$. The number of people who would need treatment would of course be a function of time, but if we assume that $.5\%$ of people infected at time $t$ would need treatment, in simulatneous need would ttherefore be $.5\%\cdot i(t)$. In reality these numbered were not reached due to restrictions and relatively effective policy-making. The model is somewhat naive and does not take into consideration many Covid-19 specific cases, \textit{e.g.}, the lockdowns and actual human behaviour.
+according to the SIR-model, the pandemic would peak at $t_{max}$ s.t. $i(t_{max})\approx 1.4\cdot10^6$. The number of people who would need treatment would of course be a function of time, but if we assume a transmission parameter $\beta$, at time $t$ in simulatneous need of treatment would be $\beta s(t) i(t)$ [1]. In reality these numbered were not reached due to restrictions and relatively effective policy-making. The model is somewhat naive and does not take into consideration many Covid-19 specific cases, \textit{e.g.}, the lockdowns and actual human behaviour.
 
+As for $R_0$, assuming at $t=0$ the whole population would be susceptible, we can approximate the value as follows:
+
+$$R_0=\frac{\beta \:s(t)}{\delta}=2\cdot2.430\cdot10^{-7}\cdot5.5\cdot10^6=2.673$$
+
+Which seems relly high, but maybe not yielded via the best estimate on earth.
+
+[1] Task 1 paper
+
+\newpage
 ## Task 3 - Simulating Monty Hall problem
 
 ```{r}
@@ -247,7 +276,7 @@ $$P(\mathrm{door} = d_a \: | \: \mathrm{open} = d_b)=\frac{\frac{1}{2}\cdot\frac
 
 And
 
-$$P(\mathrm{door} = d_a \: | \: \mathrm{open} = d_b)=\frac{1\cdot\frac{1}{3}}{P(d_b)=\frac{1}{2}}=\frac{2}{3}$$
+$$P(\mathrm{door} = d_w \: | \: \mathrm{open} = d_b)=\frac{1\cdot\frac{1}{3}}{P(d_b)=\frac{1}{2}}=\frac{2}{3}$$
 
 Where $P(d_b)$ is simply the sum $\frac{1}{2}\cdot\frac{1}{3}+\cdot\frac{1}{3}$ from the events following from
 
