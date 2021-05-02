@@ -66,26 +66,31 @@ p2
 
 ```{r Quantitative model of the exponential spread of Covid-19}
 # Functionalize the formula
-infected <- function(B, C, t){
-  return(B * exp(C * t))
+infected <- function(x) {
+
+  B = 1.598 
+  C = 0.836
+
+  return(B * exp(C * x))
 }
 ```
 
 ```{r Computations and modelling of the spread}
-C = 0.836
-B = 1.598
-
-sprintf("At day 5, there would be %.3f cases", infected(C, B , 5/7))
+sprintf("At day 5, there would be %.3f cases", infected(5/7))
 ```
 
 ```{r Similar calculation for t = 2 months}
 weeks.in.two.months <- 4 * 2
 
-sprintf("At t = 4 weeks, there would be %.3f cases", infected(C, B , weeks.in.two.months))
+sprintf("At t = 4 weeks, there would be %.3f cases", infected(weeks.in.two.months))
 ```
 
 ```{r Predicting the time required to infect the entire world}
 # Compute the number of weeks
+
+B = 1.598 
+C = 0.836
+
 weeks.to.mayhem <- log(7.8e9 / B) / C
 
 sprintf("It would require %.3f weeks to spread through the whole Earth", weeks.to.mayhem)
@@ -93,7 +98,7 @@ sprintf("It would require %.3f weeks to spread through the whole Earth", weeks.t
 
 ### Item c
 
-```{r}
+```{r A dynamical system}
 # Aux function for Runge-Kutta method
 source('~/Documents/intro_to_systems_biology/Exercise Set 1-20210428/rk4.R')
 
@@ -137,8 +142,8 @@ system.of.eqns <- function(t, X) {
   return(c(ds, di, dr))
 }
 
-# Time period for which to run the simulation
-t_scale <- 1:100
+# Time period for which to run the simulation (pick from THL data)
+t_scale <- total.weeks
 
 # Number of people infected at week 0
 initial.infected <- beta * population
@@ -155,76 +160,95 @@ pred <- data.frame(t(rk_out$X))
 # Convert to tibble
 pred <- tibble(pred) %>% rename("S" = X1, "I" = X2, "R" = X3)
 pred$time <- t_scale
+pred$expo <- sapply(t_scale, infected)
 
 # Plot
 ggplot(pred, aes(x = time)) +
   geom_line(aes(y = S, color = "S"), linetype = "dotted") +
   geom_line(aes(y = I, color = "I"), linetype = "dotdash") + 
   geom_line(aes(y = R, color = "R"), linetype = "twodash") +
-  labs(title = "Dynamical SIR system prediction for Covid-19 spread in Finland",
+  geom_line(aes(y = expo, color = "exp"), linetype = "longdash") +
+  labs(title = "Dynamical SIR system prediction for Covid-19 spread in Finland + exp growth",
            x = "weeks from the initial measurements",
-           y = "number of individuals")
+           y = "number of individuals") +
+  ylim(0, population)
 
 ```
 
 ### Item d
 
+according to the SIR-model, the pandemic would peak at $t_{max}$ s.t. $i(t_{max})\approx 1.4\cdot10^6$. The number of people who would need treatment would of course be a function of time, but if we assume that $.5\%$ of people infected at time $t$ would need treatment, in simulatneous need would ttherefore be $.5\%\cdot i(t)$. In reality these numbered were not reached due to restrictions and relatively effective policy-making. The model is somewhat naive and does not take into consideration many Covid-19 specific cases, \textit{e.g.}, the lockdowns and actual human behaviour.
+
 ## Task 3 - Simulating Monty Hall problem
 
 ```{r}
 
-# FIXME Weird frequencies appearing...
+simulate.mhall <- function(num_iter) {
 
-goats.or.cars <- function(doors) {
+  # Self explanatory
+  n_doors <- 3
+  
+  # Win count by changed strategy and initial strategy
+  w.c <- 0
+  w.nc <- 0
 
-  # Count params
-  wins.change <- 0
-  wins.dont.change <- 0
-  goat <- 0
+  for (i in 1:num_iter) {
 
-  for (i in 1:length(doors)) {
+    # Rng the prize door and guess good. Not mutex so replace = T
+    prize <- sample(1:n_doors, 1, replace = T)
+    guess <- sample(1:n_doors, 1, replace = T)
 
-    # Pick a set of random numbers by not replacing 
-    lol.random.xd <- sample(1:length(doors), size = 3)
-    # Pick arbitrary element from the set of doors ; contains the car
-    prize <- doors[lol.random.xd[1]]
-    # Pick another random element from the same set
-    guess <- doors[lol.random.xd[2]]
+    # Opened door and a possible new guess
+    host.opens <- setdiff(1:n_doors, c(prize, guess)) %>% sample(1)
+    new.guess <- setdiff(1:n_doors, c(guess, host.opens)) %>%  sample(1)
 
-    # Open a door that is not the same random buess
-    host.opens <- doors[lol.random.xd[3]]
-    # A completely new guess. Can not be the same as initial guess or host.opens
-    new.door <- sample(1:length(doors), 1)
-
-    # Make sure that the new number is effective
-    while (new.door == lol.random.xd[2] | new.door == lol.random.xd[3]) {
-      # Terminates iff new guess is neither intial guess nor host's door
-      new.door <- sample(1:length(doors), 1)
-    }
-
-    # Guess with that number
-    new.guess <- doors[new.door]
-
-    # Win by not changing
     if (prize == guess) {
-      wins.dont.change <- wins.dont.change + 1
+      w.nc <- w.nc + 1
     }
-
-    # Win by changing
+    
     if (prize == new.guess) {
-      wins.change <- wins.change + 1
+      w.c <- w.c + 1
     }
-
-    # No win, get a goat
-    goat <- goat + 1
-
   }
+  
+  c.freq <- w.c / (w.c + w.nc)
+  nc.freq <- w.nc / (w.c + w.nc)
 
-  # Compute frequencies of both possible ways of playing
-  nc <- wins.dont.change / (wins.change + wins.dont.change)# + goat)
-  c <- wins.change / (wins.change + wins.dont.change)# + goat)
-
-  sprintf("Number of wins by changing tactic: %.3f  |  Number of wins by not changing tactic: %.3f", c, nc)
-
+  sprintf("Total iter: %5.d  |  Wins by changed strategy: %.2f  |  Wins by initial strategy: %.2f",
+          num_iter, c.freq, nc.freq) 
 }
+
 ```
+
+### Item b
+
+```{r}
+# Simulate Monty Hall problem
+iterations <- c(3, 5, 8, 1e2, 1e4)
+
+# For nice results:
+mhall.simus <- sapply(iterations, simulate.mhall)
+mhall.simus
+```
+
+We should begin to see convergence towards the correct probabilities fairly quickly, but this one did not do it. Usually when simulating the Monty Hall problem (if I remember correctly, it's been a few moments since I did the last time...), a few thousand iterations should be enough for a convergence of $\varepsilon \leq 1\%$. Well, maybe it is the random take we had now at $n=10000$ that just does not tell the story. The probabilities of winning the Monty Hall problem are $P(S)=\frac{2}{3}$ and $P(N)=\frac{2}{3}$ where $S = \:''switch''$ and $N = \:''don't \: switch''$. The statement can be justified with Bayesian modeling as follows:
+
+For any door $d \in \{1,2,3\}$, the probability of it being the winning door is $P(\mathrm{win}=d)=\frac{1}{3}$.
+
+Two cases follow. Consider the winning door $d_w$. This car would never be opened, so we can focus on two remaining doors. The likelihoods of the remaining doors, say, $d_a$ and $d_b$ being opened are therefore
+
+$$P(\mathrm{open} = d_a \: | \: \mathrm{door} = d_b) = \frac{1}{2}$$
+
+$$P(\mathrm{open} = d_b \: | \: \mathrm{door} = d_w) = 1$$
+
+It immediately follows that
+
+$$P(\mathrm{door} = d_a \: | \: \mathrm{open} = d_b)=\frac{\frac{1}{2}\cdot\frac{1}{3}}{P(d_b)=\frac{1}{2}}=\frac{1}{3}$$
+
+And
+
+$$P(\mathrm{door} = d_a \: | \: \mathrm{open} = d_b)=\frac{1\cdot\frac{1}{3}}{P(d_b)=\frac{1}{2}}=\frac{2}{3}$$
+
+Where $P(d_b)$ is simply the sum $\frac{1}{2}\cdot\frac{1}{3}+\cdot\frac{1}{3}$ from the events following from
+
+$$P(d_b)=P(\mathrm{door} = d_a)\cdot P(\mathrm{open} = d_b \: | \: \mathrm{door} = d_a) + P(\mathrm{door} = d_w)\cdot P(\mathrm{open} = d_b \: | \: \mathrm{door} = d_w)$$
