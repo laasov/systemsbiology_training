@@ -180,11 +180,12 @@ goats.or.cars <- function(doors) {
   # Count params
   wins.change <- 0
   wins.dont.change <- 0
+  goat <- 0
 
   for (i in 1:length(doors)) {
 
-    # Pick a set of random numbers s.t. i_m != i_n for any m,n in {1,...,n_doors} 
-    lol.random.xd <- sample(1:length(doors), 3)
+    # Pick a set of random numbers by not replacing 
+    lol.random.xd <- sample(1:length(doors), size = 3)
     # Pick arbitrary element from the set of doors ; contains the car
     prize <- doors[lol.random.xd[1]]
     # Pick another random element from the same set
