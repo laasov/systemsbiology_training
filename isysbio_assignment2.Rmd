@@ -1,0 +1,77 @@
+---
+title: "isysbio_assignment2"
+author: "Lassi Virtanen"
+date: "5/5/2021"
+output: pdf_document
+---
+
+```{r, echo = F}
+library(tidyverse)
+```
+
+
+## TASK 1. Boolean network analysis.
+
+### Item a
+
+  ![Network representation of the system](~/Documents/iSysBio/img/boolgraphflat.png)
+
+### Item b
+
+Please accept this photo as the truth table. Syntax can be found on the last page.
+
+  ![Truth table for formulae Ba, Bc, Bc, Bd](~/Documents/iSysBio/img/truthtable.png)
+  
+### Item c
+
+  ![Graph representation of the network](~/Documents/iSysBio/img/graph.png)
+
+### Item d
+
+## TASK 2. Boolean network simulation.
+
+### Item a
+
+See boolsim.R
+
+### Item b
+
+```{r}
+source("~/Documents/intro_to_systems_biology/Exercise Set 2-20210505/boolsim.R")
+
+#
+#   Synchronous and deterministic Boolean network simulation
+#
+#   Eats a 5-dimensional logical vector
+#   Updates the model according to given Boolean functions
+#   Returns the state vector at t = steps
+#
+
+# p53 = 1, MDM2 = 1, BCL2 = 1, BAX = 1, CASP = 1
+model.state <- c(1, 0, 1, 1, 1)
+
+# Without perturbation on MDM2 state
+boolsim(steps = 10, model.state, F)
+```
+
+### Item c
+
+\begin{enumerate}
+  \item The system reaches an attractor instantaneously on third iteration.
+  \item The attractor is cyclic.
+  \item Since Boolean networks are deterministic, there is no escaping from the attractor. The model is thus fully predictable for all $t > 10$ without running the model longer.
+\end{enumerate}
+
+### Item d
+
+```{r}
+# With perturbed MDM2 state --- forces MDM2 = 0 at all times
+boolsim(steps = 10, model.state, perturb = T)
+```
+
+  
+  
+
+
+
+
