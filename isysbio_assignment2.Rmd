@@ -5,7 +5,7 @@ date: "5/5/2021"
 output: pdf_document
 ---
 
-```{r, echo = F}
+```{r, include = F}
 library(tidyverse)
 ```
 
@@ -14,19 +14,29 @@ library(tidyverse)
 
 ### Item a
 
-  ![Network representation of the system](~/Documents/iSysBio/img/boolgraphflat.png)
+  ![Network representation of the system](~/Documents/iSysBio/img/flatnetwork.png)
 
 ### Item b
 
-Please accept this photo as the truth table. Syntax can be found on the last page.
-
-  ![Truth table for formulae Ba, Bc, Bc, Bd](~/Documents/iSysBio/img/truthtable.png)
+  ![Item b: Truth table for formulae Ba, Bc, Bc, Bd](~/Documents/iSysBio/img/truthtable.png)
   
 ### Item c
 
-  ![Graph representation of the network](~/Documents/iSysBio/img/graph.png)
+  ![Item c: Graph representation of the network](~/Documents/iSysBio/img/networkgraph.png)
 
 ### Item d
+
+Attractors of this model: 0110 and 0001 -- both of which are point attractors.
+
+### Item e
+
+Basins of 0110 are the states 0010 and 0011. The associated transient states are 1110 and 1010. The Garden-of-eden states are 0111, 1111, 0100, 1011, 1100, 1000, 0010, 0000.
+
+Similarly, for 0001, the basin is 1001. Garden-of-edens are 1110 and 0101.
+
+### Item f
+
+Since most of the states lead to the attractor 0110, assuming a random state, the system would most likely converge to that state. Most of the time, these transitions would be done via the state 0011. This model would nicely exemplify the robustness of biological systems. That is, a cell, for example, would reach the ''optimal'' attractor 0110 in $2^4-4$ cases, since only $4$ different random initial states would lead to the state 0011.
 
 ## TASK 2. Boolean network simulation.
 
@@ -51,6 +61,7 @@ source("~/Documents/intro_to_systems_biology/Exercise Set 2-20210505/boolsim.R")
 model.state <- c(1, 0, 1, 1, 1)
 
 # Without perturbation on MDM2 state
+# States at each step in the print below (starting at t = 0):
 boolsim(steps = 10, model.state, F)
 ```
 
@@ -68,6 +79,44 @@ boolsim(steps = 10, model.state, F)
 # With perturbed MDM2 state --- forces MDM2 = 0 at all times
 boolsim(steps = 10, model.state, perturb = T)
 ```
+
+The system ''converges'' to an attractor much faster than without any perturbations. The attractor is reached at 3rd state. However, the attractor is not the same as the attractor is not identical. This time it is a point attractor where p53, BAX and CASP are in ''on'' state. This very well fits the scheme, since MDM2 would block p53, therefore resulting in blocked CASP. However, now active p53 blocks BCL2, which, in turn allows BAX to activate CASP.
+
+## TASK 3. A scientific article.
+
+### Item a
+
+The model consists of 15 genes, and thus, 15 Boolean functions.
+
+### Item b
+
+When CanWnt II = 0, the ianactive CanWnt does not block Bmp2. This results in activation of Nkx2.5, which, ultimately, results in the formation of FHF (an attractor) via a subset of crucial genes activated by Nkx2.5.
+
+### Item c
+
+There are 3 attractors. Namely, two areas of differential expression, FHF (first heart field) and SHF (second heart field), and a ''dead'' state with no viable outcome. The main difference between these states would be the division to viable and dead states, where, naturally as mentioned, FHF and SHF correspond to the set of viable states.
+
+### Item d
+
+The gene \textit{Fgf8} is governed by gene products Tbx1 (activating), Foxc1/2 (activating), and Mesp1 (blocking). The effects of \textit{Fgf8} are inferred from a developmental processes (from other studies) where the presence of the gene is observed to be either on or off. I think this is a good evidence, since we are only studying and modelling the effects of gene regulation, not the physical and chemical reasons, etc.
+
+### Item e
+
+A Boolean network representation is capable to model the bifurcation of cell lineages and the differential expression of the developmental phenomenon. The results suggest similar formation of expression patterns as what's been previously reported in literature.
+
+### Item f
+
+Studying the effect of \textit{Mesp1} could be studied with a couple of ways. Firstly, it could be, as the authors did, turned off for all time steps. Other methods include forcing \textit{Mesp1} to be active at all time steps, or activating or inactivating it at later time steps.
+
+Switching \textit{Mesp1} off can result in a failure, \textit{i.e.} no development of either heart field (which was an attractor too). The other result is the SHF attractor, which is reached only after rewiring of expression patterns.
+
+### Item g
+
+The results and implications of this paper are built on literature. Thus, the robustness of the resuts of this paper are a functoin of precision in which the previous studies were conducted. Major evidence towards the goodness of this model are the fact that this model results in similar patterns as other, \textit{in vivo} studies. That is, measurements conducted in laboratory environments could be simulated without other \textit{ad hoc} approaches than the Boolean functions.
+
+In my opinion the model seems to work as intended as the results resemble previous observations. The model's performance could be justified with other studies and the results fit together. It is a different, maybe philosophical question if this results in an image of a natural process or an image of our observations. However, either way, the network representation does a good job. On the other hand, as an answer to the question whether Boolean networks are a reliable representation of gene expression networks, I would say yes. Boolean networks are a neat way to do reasoning under uncertainty (about, say, gene product concentrations), since even though the model is not capable to take into account the concentrations of gene products, they might not even be required. See, the \textit{effect} of a regulatory product is binary and does not need information about concentrations and gene activities. Moreover, these models are discrete and represent a continuum (that is the differentiation of cell lineages). Discretization of a continuously changing process always loses information, but these networks arguably do the job quite well without losing too much.
+
+
 
   
   
