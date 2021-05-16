@@ -1,0 +1,343 @@
+---
+title: "isysbio_assignment3"
+author: "Lassi Virtanen"
+date: "5/12/2021"
+output: pdf_document
+---
+
+## TASK 1. Physiochemical modelling of cell signaling pathways.
+
+### Item a
+
+ODE models of cellular and molecular conditions assume a couple of (somewhat unrealistic) things about molecular biology. Firstly, the models usually assume that concentrations of molecules (species) is high and transportation of the molecules is instantaneous. Secondly, the models assume that we can model transportation between cellular environments as a function of time (resulting in \textit{e.g.}, definitions of rates). Additionally, to begin with, to model a biological system with an ODE network, such structure and applicability have to be assumed as well.
+
+### Item b
+
+Modeling signaling pathways starts from getting to know the molecular network. After that, the authors divide the modeling process to a couple of distinct steps that, ideally, should be performed in a sequence to yield a model that describes the observations to a suitable degree of accuracy and generalizability.
+
+After studying the system of interest, an assessment about prior knowledge should be performed. If the assessment hints towards a more stochastic system, the model should be formed to describe a probability distribution. However, in this task, we skip the purely probabilistic approach and concentrate solely on ODE models, which are formed initially via a process the authors call 'model design'.
+
+Model construction starts from the translation of prior knowledge to the set of (molecular) species and their interactions. During this step, the system of equations is formed, and probably implemented.
+
+Model analysis, on the other hand, assumes a set of already constructed equations. Thus, it is performed after constructing the model. During analysis, the system's behavior is studied via parameter sensitivity, possible bifurcations, and hysteresis. In short, this stage of model development aims to find extremities within the model's behavior. Following model analysis, model evaluation aims to validate the model's performance in relation to the data it tries to generalize (for example, error between 'true' and computed values, equilibrium points, etc.). Thus, model evaluation is especiially crucial for the model's performance since bad evaluation leads to a bad model.
+
+### Item c
+
+Like many models, biological models are a tradeoff between accuracy and generalizability (or, bias and variance). Therefore, a major challenge in creating biomathematical models and modelling biological phenomena is to find a suitable degree of precision and scalability. Moreover, according to the authors, summarizing prior knowledge and specifying model structures still remain challenging. These challenges, in concert with questions about general data quality (upon which the models are built on), render combining and sharing models extremely hard. Ultimately, more knowledge about biology itself is still needed in order to gather more information about possible subdivisions of intracellular compartments and circuits. This would enable rendering simpler and more effective models which offer more room for human inference.
+
+NB. The authors do not metion research funding in their text. Thus, I decided to not discuss research funding, since in my opinion model accuracies and complexities are not functions of funding. Neither are they inherently mutually exclusive as all inaccuracies arise from nothing but out ignorance (or degree of knowledge). I also want to point out that 'comprehensive examination' and 'model accuracy' are not even opposites and would probably not be funded from a same fund pool. To deepen our level of understanding about the mathematics of biological phenomena, funding should not be diverted towards only one direction. 
+
+## TASK 2. Harvested logistic.
+
+### Item a
+
+An equation containing harvesting could be defined as
+
+$$\frac{\mathrm{d}\:N_h}{\mathrm{d}\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta$$
+
+That is, as being dependent only on harvesting rate. However, usually the assumptions (sufficiently large populations of both, predators and preys) of only rate dependent models are not met. Thus, more generally, a density dependent equation would be
+
+$$\frac{d\:N_h}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta EN(t)$$
+
+Where the rate of change of popultation size is also a function of both, the number of predators and the size of the population. However, $E$ could arguably be a function of $t$ as well, yielding a final form
+
+$$\frac{d\:N_h}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta E(t)N(t)$$
+
+### Item b
+
+The model is in equilibrium when the rate $d\:N_h / d\:t = 0$. This can be achieved in a few ways:
+
+\begin{itemize}
+  \item Firstly, obviously, when population growth equals the (density weighted) predation rate.
+    $$r\big(1-\frac{N(t)}{C}\big)N(t)-\beta E(t)N(t)=0 \Rightarrow r\big(1-\frac{N(t)}{C}\big)N(t)=\beta E(t)N(t)$$
+  \item Secondly, by having $\beta = 0$ (that is, when there's no predation) or $E(t) = 0$ (no predators), three cases follow:
+    \begin{enumerate}
+      \item No population growth due to low fertility rate:
+        $$r=0 \Rightarrow r\big(1-\frac{N(t)}{C}\big)N(t)=0$$
+      \item No population to begin with:
+        $$N(t) = 0 \Rightarrow r\big(1-\frac{N(t)}{C}\big)N(t)=0$$
+       \item Thirdly, if the population is at its environment's carrying capacity:
+        $$\frac{N(t)}{C}=1 \Rightarrow N(t) = C \Rightarrow  r\big(1-\frac{N(t)}{C}\big)N(t)=0$$
+    \end{enumerate}
+\end{itemize}
+
+However, if we are to solve the equilibrium (assuming variablility of only $N$), we arrive at two different values
+
+$$r\big(1-\frac{N(t)}{C}\big)N(t)-\beta EN(t) = 0$$
+
+Firstly, as mentioned using a solution $N_1 = 0$, since with fixed parameters $r,C,\beta,E$,
+
+$$r\big(1-\frac{N_1}{C}\big)N_1-\beta EN_1 = 0 \Rightarrow N_1 = 0$$
+
+Secondly, by solving for $N_2$ in the equation above, we get
+
+$$r\big(1-\frac{N_1}{C}\big)N_2=\beta EN_2 \Rightarrow N_2 = c\big(1-\frac{\beta E}{r}\big) $$
+
+### Item c
+
+By examining the second derivatives of the equation (w.r.t. $t$), we yield that
+
+Using $N_1$: 
+$$\frac{d^2 \: N(t)}{d\:t^2}=r-\beta E > 0$$
+
+Using $N_2$:
+$$\frac{d^2 \: N(t)}{d\:t^2}=-r+\beta E < 0$$
+
+To conclude, using $N_1$, the model is stable, using $N_2$ the model is not stable.
+
+\newpage
+## TASK 3. PK/PD model.
+
+### Item a
+
+In the unperturbed model, all cells are assumed to be proliferating. This assumption does not hold in the perturbed model which, instead, assumes that the treatmend prevents a subpopulation of cells from proliferating ('eventually bringing them to death').
+
+```{r}
+library(pracma)
+source("~/Documents/intro_to_systems_biology/Exercise Set 3-20210512/tumorGrowthModel.R")
+### Parameters initialized already here -- changed if necessary
+### NOTE, NO 'PROVIDED L_0, L_1 PARAMETERS FOUND
+### NOT IN TASK DESCRIPTION, NO DOCSTRING, NOT IN MOODLE
+
+# Model specific lamdas
+l0 <- .70
+l1 <- .35
+
+# Kinetics
+k12 <- 0.0115
+k21 <- 0.0616
+ke <- 0.553
+
+# Dynamics
+k1 <- 0.00842
+k2 <- 0.0469
+central <- 4.85
+peripheral <- 1
+
+# Initial conditions
+central.drug <- 0
+peripheral.drug <- 0
+x1 <- 0.01
+x2 <- 0
+x3 <- 0
+x4 <- 0
+w <- x1 + x2 + x3 + x4
+constant <- FALSE
+```
+\newpage
+```{r}
+# Run model with fittedlambdas
+model.out <- ode23(tumorGrowthModel, t0 = 0, tf = 20,
+                     y0 = c(central.drug, peripheral.drug, x1, x2, x3, x4, w),
+                     params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant))
+# Plot results
+plot(model.out$t, model.out$y[,7], xlab = "Time (d)", ylab = "Tumor weight (mg)", type = "l",
+     main = "Model with fitted values (lambda)", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+```
+\newpage
+
+### Item b
+
+#### i. Initial model and single batch dose
+
+Using 2000 mg as dose size:
+
+```{r}
+# Update lamdas
+l0 <- 0.3
+l1 <- 0.1
+
+# Initial conditions
+central.drug <- 0
+peripheral.drug <- 0
+x1 <- 0.01
+x2 <- 0
+x3 <- 0
+x4 <- 0
+w <- x1 + x2 + x3 + x4
+constant <- FALSE
+
+# Run model
+x.initial.1 <- ode23(tumorGrowthModel, t0 = 0, tf = 14,
+              y0 = c(central.drug, peripheral.drug, x1, x2, x3, x4, w),
+              params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+              rtol = 1e-6, atol = 1e-9)
+
+# Pick time point
+t.prior <- x.initial.1$t
+
+# New conditions with boosted drug dose (2000 mg)
+conditions.i1 <- x.initial.1$y[dim(x.initial.1$y)[1],]
+conditions.i1[2] <- 2000
+
+# Run with dosed conditions
+x.later.1 <- ode23(tumorGrowthModel, t0 = 0, tf = 86,
+              y0 = conditions.i1,
+              params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+              rtol = 1e-6, atol = 1e-9)
+
+# Pick end time point
+t.later <- x.later.1$t
+# Get time interval
+t.interval <- c(t.prior, t.later + t.prior[length(t.prior)])
+# Values to be plotted
+outs <- rbind(x.initial.1$y, x.later.1$y)
+```
+\newpage
+```{r}
+# Plotting
+par(mfrow = c(2, 1))
+plot(t.interval, outs[,7], xlab = "Time (d)", ylab = "Tumor weight (mg)", type = "l",
+     main = "Model for tumor weight growth, by day", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+plot(t.interval, outs[,2], xlab = "Time (d)", ylab = "Conc. (mg/ml)", type = "l",
+     main = "Drug concentration, decay per day", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+```
+\newpage
+
+The tumor stops proliferating after $t = 70 \:d$. The effect of the drug seems slow, since it decays exponentially, having only a fraction of its initial concentration at such time point. The term 'drug time of action' is somewhat unambiguous, but I would interpret that as the interval $[14, 70]$, where the drug's effect seems the strongest.
+
+Next, using one batch to eradicate the tumor:
+
+```{r}
+conditions.i1 <- x.initial.1$y[dim(x.initial.1$y)[1],]
+conditions.i1[2] <- 9233.81 # Kills the tumor eventually
+
+# Run with dosed conditions
+x.later.1 <- ode23(tumorGrowthModel, t0 = 0, tf = 500,
+              y0 = conditions.i1,
+              params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+              rtol = 1e-6, atol = 1e-9)
+
+# Pick end time point
+t.later <- x.later.1$t
+# Get time interval
+t.interval <- c(t.prior, t.later + t.prior[length(t.prior)])
+# Values to be plotted
+outs <- rbind(x.initial.1$y, x.later.1$y)
+```
+\newpage
+```{r}
+# Plotting
+par(mfrow = c(2, 1))
+plot(t.interval, outs[,7], xlab = "Time (d)", ylab = "Tumor weight (mg)", type = "l",
+     main = "Model for tumor weight growth, using dose = 9233.81 mg", lwd = 4, ylim = c(0, max(outs[,7])))
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+plot(t.interval, outs[,2], xlab = "Time (d)", ylab = "Conc. (mg/ml)", type = "l",
+     main = "Drug concentration, decay with no boosting", lwd = 4, ylim = c(0, max(outs[,2])))
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+```
+\newpage
+
+#### ii. Continuous feed
+
+```{r}
+# Using same lambdas
+l0 <- 0.3
+l1 <- 0.1
+
+# Initial conditions
+central.drug <- 0
+peripheral.drug <- 0
+x1 <- 0.01
+x2 <- 0
+x3 <- 0
+x4 <- 0
+w <- x1 + x2 + x3 + x4
+constant <- FALSE
+
+# Run for 14 days
+x.initial.task2 <- ode23(tumorGrowthModel, t0 = 0, tf = 14,
+                         y0 = c(central.drug, peripheral.drug, x1, x2, x3, x4, w),
+                         params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+                         rtol = 1e-6, atol = 1e-9)
+
+# Update conditions with boosting
+peripheral.drug.boost2 <- 1000
+conditions.initial.task2 <- x.initial.task2$y[dim(x.initial.task2$y)[1],]
+conditions.initial.task2[2] <- peripheral.drug.boost2
+
+# Run model for 900 days after boosting dose
+x.later.task2 <- ode23(tumorGrowthModel, t0 = 0, tf = 900,
+                       y0 = conditions.initial.task2,
+                       params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, TRUE), # Note
+                       rtol = 1e-6, atol = 1e-9)
+
+# Pick time and vals for plot
+t.interval.task2 <- c(x.initial.task2$t, x.later.task2$t + x.initial.task2$t[length(x.initial.task2$t)])
+outs.task2 <- rbind(x.initial.task2$y, x.later.task2$y)
+```
+\newpage
+```{r}
+# Plot
+par(mfrow = c(2, 1))
+plot(t.interval.task2, outs.task2[,7], xlab = "Time (d)", ylab = "Tumor weight (mg)", type = "l",
+     main = "Model for tumor weight growth, by day", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+plot(t.interval.task2, outs.task2[,2], xlab = "Time (d)", ylab = "Conc. (mg/ml)", type = "l",
+     main = "Maintained drug concentration, no decay", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+```
+
+According to the model above, continuous adminstration eradicates the tumor in about 800 days.
+
+#### iii. Sequential batch
+
+```{r}
+# Using same lambdas
+l0 <- 0.3
+l1 <- 0.1
+
+# Using same initial conditions
+central.drug <- 0
+peripheral.drug <- 0
+x1 <- 0.01
+x2 <- 0
+x3 <- 0
+x4 <- 0
+w <- x1 + x2 + x3 + x4
+constant <- FALSE
+
+# As in previous item
+x.initial.task3 <- ode23(tumorGrowthModel, t0 = 0, tf = 14,
+                         y0 = c(central.drug, peripheral.drug, x1, x2, x3, x4, w),
+                         params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+                         rtol = 1e-6, atol = 1e-9)
+
+# Pick initial time and values before dosing
+time.task3 <- x.initial.task3$t
+vals.task3 <- x.initial.task3$y
+
+# Iterate dosing -- prevents total decay
+for (i in 0:60) {
+  # Update conditions as preferred
+  peripheral.drug.boost3 <- 1000
+  conditions.i3 <- vals.task3[dim(vals.task3)[1],]
+  conditions.i3[2] <- conditions.i3[1] + peripheral.drug.boost3
+
+  # Run model
+  x.temp <- ode23(tumorGrowthModel, t0 = 0, tf = 15,
+                  y0 = conditions.i3,
+                  params = c(l0, l1, k12, k21, ke, k2, k1, central, peripheral, constant),
+                  rtol = 1e-6, atol = 1e-9)
+
+  # Pick values until sequence is exhausted
+  time.task3 <- c(time.task3, x.temp$t + 14 + i * 15)
+  vals.task3 <- rbind(vals.task3, x.temp$y)
+}
+
+# Plot
+par(mfrow = c(2, 1))
+plot(time.task3, vals.task3[,7], xlab = "Time (d)", ylab = "Tumor weight (mg)", type = "l",
+     main = "Model for tumor weight growth, by day", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+plot(time.task3, vals.task3[,2], xlab = "Time (d)", ylab = "Conc. (mg/ml)", type = "l",
+     main = "Maintained drug concentration, halted decay", lwd = 4)
+grid(col = "gray", lty = "dotted", lwd = par("lwd"), equilogs = T)
+```
+
+#### iv. Comparison of the approaches
+
+The drug seems effective in all three approaches (single batch, continuous, sequential batch). However, single batch requires a relatively large single, possibly harmful dose of over 9000 mg. Thus, I would lean towards the two latter methods (possibly sequential batch, since it would be possible to maintain for 800 days). Both seem equally effective with similar time intervals (approx. 800 days) using similar dosing. However, these approaches need additional 300 days to destroy the tumor, when compared to the single batch approach.
