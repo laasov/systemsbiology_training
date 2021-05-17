@@ -37,11 +37,11 @@ $$\frac{\mathrm{d}\:N_h}{\mathrm{d}\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta$$
 
 That is, as being dependent only on harvesting rate. However, usually the assumptions (sufficiently large populations of both, predators and preys) of only rate dependent models are not met. Thus, more generally, a density dependent equation would be
 
-$$\frac{d\:N_h}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta EN(t)$$
+$$\frac{d\:N_h(t)}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta EN(t)$$
 
-Where the rate of change of popultation size is also a function of both, the number of predators and the size of the population. However, $E$ could arguably be a function of $t$ as well, yielding a final form
+Where the rate of change of population size is also a function of both, the number of predators and the size of the population. However, $E$ could arguably be a function of $t$ as well, yielding a final form
 
-$$\frac{d\:N_h}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta E(t)N(t)$$
+$$\frac{d\:N_h(t)}{d\:t}=r\big(1-\frac{N(t)}{C}\big)N(t)-\beta E(t)N(t)$$
 
 ### Item b
 
@@ -63,7 +63,7 @@ The model is in equilibrium when the rate $d\:N_h / d\:t = 0$. This can be achie
 
 However, if we are to solve the equilibrium (assuming variablility of only $N$), we arrive at two different values
 
-$$r\big(1-\frac{N(t)}{C}\big)N(t)-\beta EN(t) = 0$$
+$$r\big(1-\frac{N_h(t)}{C}\big)N_h(t)-\beta EN_h(t) = 0$$
 
 Firstly, as mentioned using a solution $N_1 = 0$, since with fixed parameters $r,C,\beta,E$,
 
@@ -78,13 +78,12 @@ $$r\big(1-\frac{N_1}{C}\big)N_2=\beta EN_2 \Rightarrow N_2 = c\big(1-\frac{\beta
 By examining the second derivatives of the equation (w.r.t. $t$), we yield that
 
 Using $N_1$: 
-$$\frac{d^2 \: N(t)}{d\:t^2}=r-\beta E > 0$$
+$$\frac{d^2 \: N_h(t)}{d\:t^2}=r-\beta E > 0$$
 
 Using $N_2$:
-$$\frac{d^2 \: N(t)}{d\:t^2}=-r+\beta E < 0$$
+$$\frac{d^2 \: N_h(t)}{d\:t^2}=-r+\beta E < 0$$
 
 To conclude, using $N_1$, the model is stable, using $N_2$ the model is not stable.
-
 \newpage
 ## TASK 3. PK/PD model.
 
