@@ -1,0 +1,284 @@
+---
+title: "TMED917 - Assignment 4."
+author: "Lassi Virtanen"
+date: "5/23/2021"
+output: html_document
+---
+
+### Task 1. Gompertzian growth dynamics
+
+
+#### Item a.
+
+The equilibrium points can be computed by setting the rate of change to zero:
+
+$$\frac{d\:\dot{x}}{d\:t}=0\Rightarrow x(a-b\ln(x))=0$$
+
+Thus, we arrive at the trivial equilibrium point $x=0$ and the nontrivial equilibrium point:
+
+$$a-b\ln(x)=0\Rightarrow x = \exp\Big(\frac{a}{b}\Big)$$
+
+To conclude, the set of equilibrium points is $S_{eq}=\{0, \exp\Big(\frac{a}{b}\Big)\}$.
+
+#### Item b.
+
+```{r gompertzian equation}
+gompertzian <- function(t, x, params) {
+
+  "
+  Implements the simple Gompertzian equation for tumor growth
+  To be computed using pracma::ode23
+  
+  params:
+      t --- time (only for ode23 - bad implementation...)
+      x --- cell population size
+      a --- growth rate parameter
+      b --- growth saturation parameter
+  returns:
+      change of population size at time point t
+  "
+  
+  a <- params[1]
+  b <- params[2]
+
+  return(a*x - b*x*log(x))
+
+}
+```
+
+
+```{r}
+# Run the model for 3000 days using pracma::ode23, plot the curve
+
+# Vectorize parameters a, b
+g.model.params <- c(0.1, 0.0048)
+
+# Iterate the model for values for 3000 days
+gromp.out1 <- pracma::ode23(gompertzian, t0 = 0, tfinal = 3000,
+                            y0 = 1,
+                            params = g.model.params,
+                            rtol = 1e-3, atol = 1e-6)
+
+# Get time t and value y_t
+t.interval <- gromp.out1$t
+y.range <- gromp.out1$y
+
+# PLot the outcome
+plot(t.interval, y.range, type = "l", lwd = 2,
+     xlab = "time (d)", ylab = "population size (n)",
+     main = "Gompertzian model of tumor population growth, point of saturation on red (maximum carrying capacity)",
+     cex.main = .75)
+abline(v = 1800, col = "red")
+```
+
+#### Item c.
+
+```{r}
+# Investigating the role of model parameters a, b
+
+# Run with perturbed params
+gromp.out2 <- pracma::ode23(gompertzian, t0 = 0, tfinal = 3000,
+                            y0 = 1,
+                            params = c(0.1, 0.0024),
+                            rtol = 1e-3, atol = 1e-6)
+gromp.out3 <- pracma::ode23(gompertzian, t0 = 0, tfinal = 3000,
+                            y0 = 1,
+                            params = c(0.15, 0.0040),
+                            rtol = 1e-3, atol = 1e-6)
+
+par(mfrow = c(1, 3))
+plot(t.interval, y.range, type = "l",
+     xlab = "time (d)", ylab = "cell population size (n)",
+     main = "default params", cex.main = .75)
+plot(gromp.out3$t, gromp.out3$y, type = "l",
+     xlab = "time (d)", ylab = "cell population size (n)",
+     main = "a = 0.015, b = default", cex.main = .75)
+plot(gromp.out2$t, gromp.out2$y, type = "l",
+     xlab = "time (d)", ylab = "cell population size (n)",
+     main = "a = default, b = 0.0040", cex.main = .75)
+```
+
+Effects of the perturbations visualized above. According to the representation, changing the parameter a results in a system that reaches its equilibrium at sufficiently similar looking time range. However, the equilibrium is orders of magnitude greater than that of the 'default' system. Interestingly, pertubing (lowering) the saturation parameter b renders the equilibrium point higher as well. On the other hand, the system reaches its equilibrium point much slower than the previous systems.
+
+
+### TASK 2. Cell kill hypothesis.
+
+
+#### Item a.
+
+An example of fractional removing of the cells (from a system defined by the Gompertz model) could be expressed as
+
+$$\frac{d\:\dot{x}}{d\:t}=ax-b\ln(x)-\gamma x$$
+
+Where $\gamma \in [0,1]$ denotes the fraction of cells to be removed (killing rate, \textit{e.g.}, via therapy) from the system at each time point.
+
+#### Item b.
+
+```{r}
+gompertzian_cellkill <- function(t, x, params) {
+
+  "
+  Implements Gompertzian with cell kill
+  
+  Parameters a, b as with gompertzian function
+  Additional parameter gamma --- killing rate
+  "
+
+  a <- params[1]
+  b <- params[2]
+  gamma <- params[3]
+
+  return(a*x - b*x*log(x) - gamma*x)
+
+}
+```
+
+```{r Simulating the system with cell kill}
+# Simulate with Gompertzian for 300, 600, 900 days (separately)
+gromp.out.list <- lapply(c(300, 600, 900), function (x) {
+  pracma::ode23(gompertzian, t0 = 0, tfinal = x, y0 = 1,
+                params = c(0.1, 0.0048), rtol = 1e-3, atol = 1e-6)
+})
+
+# Apply cell kill for 1000 days --- using the last y value of each respective gromp.out.list element
+cellkill.out.list <- lapply(1:length(gromp.out.list), function (x) {
+  pracma::ode23(gompertzian_cellkill, t0 = 0, tfinal = 1000, 
+                y0 = gromp.out.list[[x]][["y"]][length(gromp.out.list[[x]][["y"]])],
+                params = c(0.1, 0.0048, 0.01), # Using gamma = 0.01 / day, i.e. a percent of cells dies every day
+                rtol = 1e-3, atol = 1e-6)
+})
+
+# Concatenate y-value lists for each case
+y.vals <- lapply(1:length(gromp.out.list), function (x) {
+  append(gromp.out.list[[x]]$y, cellkill.out.list[[x]]$y)
+})
+
+# Create time ranges for each case
+t.vals <- lapply(1:length(gromp.out.list), function (x) {
+  c(gromp.out.list[[x]]$t, cellkill.out.list[[x]]$t + gromp.out.list[[x]]$t[length(gromp.out.list[[x]]$t)])
+})
+```
+
+```{r Plot the results}
+par(mfrow = c(3 , 1))
+plot(t.vals[[1]], y.vals[[1]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "Fractional cell kill activated after 300 days", cex.main = .75)
+plot(t.vals[[2]], y.vals[[2]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "Fractional cell kill activated after 600 days", cex.main = .75)
+plot(t.vals[[3]], y.vals[[3]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "Fractional cell kill activated after 900 days", cex.main = .75)
+```
+
+#### Item c.
+
+Fractional cell kill seems to work only on the two latter cases (that is, when cell kill is initialized after 600 and 900 days).
+The effect of cell kill varies. The two latter cases indicate that the effect of fractional cell kill is directly proportional to the number of days the tumor has proliferated/grown prior to the application of the drug.
+
+
+### TASK 3. Norton-Simon hypothesis.
+
+
+#### Item a.
+
+Norton-Simon model could be implemented as follows:
+
+$$\frac{d\:\dot{x}}{d\:t}=(1-\gamma)(ax - bx\ln(x))$$
+
+Where a negative coefficient $1-\gamma$ for $\gamma > 1$ corresponds to a decreasing population (\textit{e.g.}, under a drug therapy).
+
+#### Item b.
+
+```{r}
+gompertzian_ns <- function(t, x, params) {
+
+  "
+  Implements Gompertzian with Norton-Simon (NS) hypothesis
+  
+  Parameters a, b as with gompertzian function
+  Additional parameter gamma --- therapy effect (killing rate)
+  "
+
+  a <- params[1]
+  b <- params[2]
+  gamma <- params[3]
+
+  return((1 - gamma)*(a*x - b*x*log(x)))
+
+}
+```
+
+```{r Simulating the system using NS cell death}
+# Simulate with Gompertzian for 300, 600, 900 days (separately)
+gromp.out.list <- lapply(c(300, 600, 900), function (x) {
+  pracma::ode23(gompertzian, t0 = 0, tfinal = x, y0 = 1,
+                params = c(0.1, 0.0048), rtol = 1e-3, atol = 1e-6)
+})
+
+# Apply drug therapy for 1000 days --- using the last y value of each respective gromp.out.list element
+ns.out.list <- lapply(1:length(gromp.out.list), function (x) {
+  pracma::ode23(gompertzian_ns, t0 = 0, tfinal = 1000, 
+                y0 = gromp.out.list[[x]][["y"]][length(gromp.out.list[[x]][["y"]])],
+                params = c(0.1, 0.0048, 1.2), # Using 1/5 of cells dying each round
+                rtol = 1e-3, atol = 1e-6)
+})
+
+# Concatenate y-value lists for each case
+y.vals <- lapply(1:length(gromp.out.list), function (x) {
+  append(gromp.out.list[[x]]$y, ns.out.list[[x]]$y)
+})
+
+# Create time ranges for each case
+t.vals <- lapply(1:length(gromp.out.list), function (x) {
+  c(gromp.out.list[[x]]$t, ns.out.list[[x]]$t + gromp.out.list[[x]]$t[length(gromp.out.list[[x]]$t)])
+})
+```
+
+```{r}
+# Plot out
+par(mfrow = c(3 , 1))
+plot(t.vals[[1]], y.vals[[1]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "NS model, therapy implemented after 300 days", cex.main = .75)
+plot(t.vals[[2]], y.vals[[2]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "NS model, therapy implemented after 600 days", cex.main = .75)
+plot(t.vals[[3]], y.vals[[3]], type = "l",
+     xlab = "time (d)", ylab = "cells (n)",
+     main = "NS model, therapy implemented after 900 days", cex.main = .75)
+```
+
+#### Item c
+
+NS differs from cell kill model in an essential way. Instead of being directly proportional to the number of days the tumor has grown, the NS cell removing is inversely proportional to the growth time period. Thus, according to the model, a tumor system should be treated rather earlier than later. 
+
+
+### TASK 4. Evolutionary view of cancer treatment.
+
+
+#### Item a.
+
+According to the authors, cancers can be viewed as
+\begin{itemize}
+  \item Open, since the cells can exhange physical matter, energy (and information) with their environment
+  \item Complex, due to the large number of components that they consist of
+  \item Adaptive, because cancer (system) can change its state as time progresses (modeled with nonlinear dynamics)
+\end{itemize}
+
+#### Item b.
+
+The key component in evolutionary cancer treatment is, essentially, the application of Darwinian principles and evolutionary biology to how cancer progresses, survives and proliferates. This approach enables modeling cancer via, say, population dynamics (strategies for cell population control), cost-benefit analysis (cost of drug resistance) and game theory (game-playing, exploiting the cost of resitance). Ultimately, a key concept in evolutionary cancer therapy is aknowleding that malevolent cells should not be eradicated with continuous maximum acceptable drug doses, but, in fact, almost quite the opposite.
+
+#### Item c.
+
+The core idea of non-continuous, non-dose-fixed therapies initially comes from pest-control. In a continuous, high-dose pest (or tumor) eradication strategy, the high and unending pesticide (drug) exposure creates a high selection pressure towards pesticide (drug) resistance. Therefore, a 'traditional' treatment would, in layman's terms, kill the drug sensitive cells and thus open niches for drug resistant cells to fill. In reality, this can be extended by the idea that it is the very treatment itself that creates the resistant cells. In a non-continuous, non-fixed approach, however, such situation is avoided for maximum time period, as the method is designed to keep the population of resistant cells as low as possible for as long as possible. This creates fewer pressure and thus holds the tumor in a drug sensitive state.
+
+#### Item d.
+
+Predator facilitation is a strategy in which two therapies are applied in a sequence. This forces the tumor cells to periodically alter their phenotypes. The oscillation of phenotypes forces the cells to not adopt either optimal strategy (not able to maximize survivalibity via resistance, not able to save maximal ATP due to periodical adaptation costs). As a result, the cells simultaneously 'lose' the resistance and the ATP gains, making them more vulnerable to treatment.
+
+#### Item e.
+
+According to the authors, the main reason the approach is not adopted is the lack of usable data with temporal and spatial information. Additionally, there are no oncological methods designed for the kind of sparse data that oncological analysis produces.
