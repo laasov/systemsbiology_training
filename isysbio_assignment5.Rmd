@@ -1,0 +1,268 @@
+---
+title: "TMED917 Introduction to systems biology - assignment 5"
+author: "Lassi Virtanen"
+date: "5/30/2021"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+library(stats)
+library(viridis)
+```
+
+
+## TASK 1. Testing efficacy of the drug.
+
+#### Item a.
+
+```{r}
+placebo <- c(20.5, 21.8, 17.7, 20.9, 20.3)
+dosage.low <- c(9.2, 10.1, 10.8, 14.1, 13.3)
+dosage.high <- c(8.2, 12.5, 10.2, 9.4, 10.2)
+vals <- c(placebo, dosage.low, dosage.high)
+condition <- c(rep("placebo", 5), rep("low", 5), rep("high", 5))
+```
+
+```{r}
+lm.out <- lm(vals ~ ., tibble(vals, condition))
+
+anova.tbl <- anova(lm.out)
+anova.tbl
+```
+\newpage
+To conclude:
+
+\begin{enumerate}
+  \item Sum of squares: $301.945$
+  \item F-statistic: $48.948$
+  \item P-value: $1.695\cdot10^{-6}$
+\end{enumerate}
+
+The p-value ($p < 0.05$) implies a linear correlation between drug efficacy and dosage size. This is an indicative of an effective drug. The statement is supported by the condition-wise prediction, as exemplified below.
+
+```{r}
+pred.cl <- predict.lm(lm.out, tibble(condition = unique(condition)))
+
+pred.out <- c(pred.cl - mean(pred.cl))
+names(pred.out) <- c("placebo", "low", "high")
+pred.out
+```
+
+The null/alternative hypotheses of the experiment can be listed in respective order as follows.
+
+\begin{itemize}
+  \item $H_0:$ No condition produces a significant output. That is, the means of the conditions are identical and possible variation is mostly a result of intra-condition variability.
+  \item $H_a:$ There is at least some significant variation between the conditions. This variation is possibly a result of differences between conditions.
+\end{itemize}
+
+#### Item b.
+
+Having a lower 'effect' measure, a higher dose seems effective. However, this needs to be justified with further statistical testing.
+
+```{r}
+condition.split <- condition != "placebo"
+
+lm(vals ~ condition.split + condition, tibble(vals, condition)) %>% anova()
+```
+
+To summarize:
+
+\begin{itemize}
+  \item Split data:
+    \begin{enumerate}
+      \item Sum of squares: $297.045$
+      \item F-statistic: $96.3078$
+      \item P-value: $4.387\cdot 10^{-7}$
+    \end{enumerate}
+  \item Whole data:
+    \begin{enumerate}
+      \item Sum of squares: $4.9$
+      \item F-statistic: $1.5887$
+      \item P-value: $0.2315$
+    \end{enumerate}
+\end{itemize}
+
+Null/alternative hypotheses
+
+\begin{itemize}
+  \item $H_0:$ The means of the effects of lower and higher dosage do not differ significantly. a change in dosage does not result in a better outcome.
+  \item $H_a:$ There is significant variation between the means. One approach could be preferable over another.
+\end{itemize}
+
+Thus, the ANOVA implies that there is actual significance between placebo and drug ($p < 0.05$). This test, however, does not prove the assumption that higher dosage would result in a significantly higher effect ($p > 0.05$). Therefore, it would seem appropriate to conclude (to some degree) that a lower dosage performs relatively well, assuming that, in clinical conditions, it would be encouraged to try to use as small effective dosing as appropriate. However, coming from a bioinformatics background, my knowledge of pharmacology is somewhat limited, which might probably affect my ability to recognize sufficient amount of evidence needed for making preferences.
+
+## TASK 2. Modeling Luria-Delbrück fluctuation test.
+
+#### Item a.
+
+Construction of the model can be performed as follows.
+
+Let the mutation rate $\mu = 2 \cdot 10^{-8}$ and fix a set s.t. every generation $g \in \{0,2,...,29\}$, where $g_0$ is the initial founder generation. Now, since the growth doubles each generation, we can create two following equations:
+
+$$\mathrm{S}_{g+1}=2(\mathrm{S}_g-\mathrm{M}_g)$$
+
+$$\mathrm{R}_{g+1}=2(\mathrm{R}_g+\mathrm{M}_g)$$
+
+For susceptible and resistant cells, respectively, where
+
+$$\mathrm{M}_g \sim \mathrm{Bin}(\mathrm{S}_g,\:\mu)$$
+\newpage
+
+#### Item b.
+
+```{r}
+run_luria_delbruck <- function (G, mu = 2e-8) {
+
+  "
+  Simulates the Luria-Delbruck fluctuation test.
+  
+  Params:
+    G: number of generations
+    mu: mutation rate --- default 2e-8 (not variable in this task)
+  
+  Returns:
+    a tibble containing number of each cell classes at each generation g in 1:G
+  "
+
+  # Initialize vectors for numbers of cells in each generation.
+  # Initially zero for all cell classes
+  S <- numeric(G)
+  R <- numeric(G)
+  M <- numeric(G)
+  # Assuming no initially mutated cells, set initial number of susceptible cells to 1
+  S[1] <- 1
+
+  # Iterate over G by updating every generation g+1 according to previous generation g
+  for (generation in 1:(G - 1)) {
+
+    # Binomially distributed mutation with parameters defined in above equations
+    M[generation] <- rbinom(1, S[generation], mu)
+
+    ### Actual updating of the S and R variables
+
+    # Susceptible = Previously susceptible - Now mutated cells
+    S[generation + 1] <- 2 * (S[generation] - M[generation])
+    # Resistant = Previously resistant + Newly mutated cells
+    R[generation + 1] <- 2 * (R[generation] + M[generation])
+
+  }
+
+  return(tibble(generation = 1:G, susceptible = S, resistant = R, mutated = M))
+
+}
+```
+
+Next, we run the iteration for 1000 times, after which, we combine the results into one tibble
+
+```{r}
+# Actual simulation runs here
+lb.out <- replicate(1000, run_luria_delbruck(30), simplify = F)
+# Combine to one data frame
+lb.comb.tb <- reduce(lb.out, function (x, y) {rbind(x, y)})
+lb.comb.tb$sample <- rep(1:1000, each = 30)
+```
+
+\newpage
+
+Finally proceed to visualization of the results
+
+```{r}
+lb.comb.tb %>% ggplot(aes (x = generation, y = resistant, 
+                           group = sample, color = sample)) +
+  geom_line() + 
+  scale_color_viridis(option = "A") +
+  labs(y = "Cumulative number of resistant cells", x = "Generation") +
+  ylim(0, 20000) + # NB highest line renders ylim well over 30k -> lims cut for visualization
+  ggtitle("Number of resistanct cells by generation and sample number")
+```
+
+As the plot shows, the model results in variation. I would like to assume that the main source of it is due to the intrinsic randomness of the model as I'm not an expert in microbiology. One explanatory reason could thus be the dynamics of the resistance's propagation through the population. That is, the muation occurs randomly at some generation $g$, after which the popultion grows exponentially, resulting in humongous variability in final resistant population size.
+
+\newpage
+
+#### Item c.
+
+Modeling a situation where mutation was a result of selection (phage addition).
+
+$$\mathrm{R}_g = \mathrm{Bin}(n, \mu)$$
+
+Where $n$ is the population size.
+
+```{r}
+# Simulate the above assumption
+selection.mut <- rbinom(1000, 2^29, 2e-8)
+```
+
+```{r}
+# Plot the outcome
+tibble(resistant = cumsum(selection.mut), n = 1:length(selection.mut)) %>% 
+  ggplot(aes(x = n, y = resistant)) + 
+  geom_line() +
+  ggtitle("Cumulative number of resistant cells, assuming selection pressure") +
+  labs(y = "number of resistant cells", x = "Number of trials")
+```
+
+\newpage
+
+#### Item d.
+
+```{r}
+### Comparison of the two models
+
+# Select L-B model values
+lb.hist.vals <- unlist(lapply(lb.out, function (x) {max(x$resistant)}))
+lb.hist.tb <- tibble(resistant = lb.hist.vals)
+
+# Tibblize (eh) selection pressure model values
+sel.hist.tb <- tibble(resistant = selection.mut)
+
+# Plot the results
+patchwork::wrap_plots(
+  lb.hist.tb %>% ggplot(aes(x = resistant)) + geom_histogram(bins = 20) + 
+    ggtitle("Random mutation model"),
+  sel.hist.tb %>% ggplot(aes(x = resistant)) + geom_histogram(bins = 20) +
+    ggtitle("Selection model")
+)
+```
+
+\newpage
+
+Finally, let us compute means and variances of the models.
+
+```{r}
+sprintf("Mean of the random mutation model: %.4f", mean(lb.hist.vals))
+sprintf("Variance of the random mutation model: %.4f", var(lb.hist.vals))
+sprintf("Mean of the selection pressure model: %.4f", mean(selection.mut))
+sprintf("Variance of the selection pressure model: %.4f", var(selection.mut))
+```
+
+The random mutation model seems to match the L-D observation about mean and variance quite well. Note that in the latter model the mean and variance are automatically very similar. To answer the question about the word 'fluctuation', I would like to use the variance as a starting point. How I understood the name is that the results of the test aim to measure the effect of the intrinsic stochasticity of mutations. Thus, the simulated outcomes 'fluctuate', not resulting in a deterministic state (which could be the case in the acquired mutation model).
+
+#### Item e.
+
+The results can function as an analogy between general ecology and population genetics and cancer genetics. Assuming the complexity eucaryote cell and the size of human genome do not overwrite the results of the test, the Luria-Delbrück model could be used as a guideline in testing and modeling how cancer tumors generate grud-resistant cell populations. Such observations could be used in cancer treatment if the generational age of the tumor was known. For example, the model could render useful statistical methods to approximate the total number of drug-resistant cells, cell populations, etc. But, once again, I am not experienced in the field of cancer biology or medicine and my knowledge of the topic is limited. I hope this somewhat unjustified question will not render my submission useless.
+
+\newpage
+
+## TASK 3. Reductionism in biology.
+
+#### Item a.
+
+Reductionism in molecular biology could be loosely defined as \textit{breaking the cell down to its component molecules as an attempt to understand its functionalities}. Generally, the reductionist approach applies the assumption that the causal reasons to a system's function could be unearthed by studying its subcompartments and 'building blocks' in isolation. In biology, however, this seems to be a somewhat faulty assumption, since many, for example neurobiological and psychological processes are so complex that their 'building blocks' have little to no power in giving processable information about the system's function. 
+
+#### Item b.
+
+I don't know how drugs are designed and my knowledge of vaccine design is no vaster than that of the average biologist's. Still, if I could speculate, I'd say that reductionism has power in describing the molecular and cellular targets of, for example, drugs. Designing a functional drug that works as intended requires, as far as I know, a comprehensive image of the system that the drug molecule would interact with. In such situations, reductionism is able to describe precisesly how the drug should interact with its target molecules. However, as we incerease the level of abstraction, the approach fails. If the drug's holistic effect were to be modeled on a \textit{systems} level, a reductionist approach would fail due to the large degree of complexity that biological systems arise from. Any, poccibly non-linear and dynamic, or at best chaotic behavior can not be explained with reductionism. 
+
+#### Item c.
+
+The author probably acknowledges the somewhat faulty approach that biochemistry had prior to 1991. Until then, biochemists had attempted to characterize molecular and cell biology by describing the characteristics of biomolecules and signaling pathways. However, after decades of research data accumulation, this method has turned out to be incomplete. It has not been clear whether biochemists and molecular biologists have been answering the correct questions in terms of producing meaningful data. In addition, the data may not even offer relevant insights, since the philosophies and practices of previous decades' biology have been poisoned by agendas of irrelevant human egos and laziness. One related reason is the fear that biolgists experience when they're exposed to mathematical modelling and computational data-analysis. In 1990's, I understood, biolgists were forced notice this, which, as the authors put it, killed the old biochemistry.
+
+
+
+
+
+
+
+
